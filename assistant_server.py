@@ -8,29 +8,31 @@ assistant_id = os.getenv("ASSISTANT_ID")
 
 app = Flask(__name__)
 
-@app.route("/whatsapp", methods=["POST"])
+@app.route("/whatsapp", methods=["GET", "POST"])
 def handle_whatsapp():
+    # Пробуем взять сообщение из заголовка
     user_message = request.headers.get("message")
+
+    # Если не пришло — пробуем из GET параметра
+    if not user_message:
+        user_message = request.args.get("message")
+
     if not user_message:
         return jsonify({"reply": "❗ Сообщение не получено"}), 400
 
-    # Создание сессии (thread)
+    # Создаём поток и отправляем сообщение
     thread = openai.beta.threads.create()
-
-    # Добавление пользовательского сообщения
     openai.beta.threads.messages.create(
         thread_id=thread.id,
         role="user",
         content=user_message
     )
 
-    # Запуск помощника
     run = openai.beta.threads.runs.create(
         thread_id=thread.id,
         assistant_id=assistant_id
     )
 
-    # Ожидание завершения
     while True:
         status = openai.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
         if status.status == "completed":
