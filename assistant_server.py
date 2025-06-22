@@ -38,11 +38,10 @@ def handle_whatsapp():
 
     messages = openai.beta.threads.messages.list(thread_id=thread.id)
     answer = messages.data[0].content[0].text.value
-    cleaned_answer = re.sub(r"【\d+:\d+†source】", "", answer).strip()
+    cleaned_answer = re.sub(r"【\d+:\d+†.*?】", "", answer).strip()
 
     return jsonify({"replies": [{"message": cleaned_answer}]})
-
-
+    
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
