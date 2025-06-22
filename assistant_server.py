@@ -46,6 +46,10 @@ def handle_whatsapp():
 @app.route("/transcribe", methods=["POST"])
 def transcribe_voice():
     data = request.get_json()
+
+    # 🔍 Добавлено логирование запроса
+    print("🎙️ Получен запрос на транскрипцию:", data)
+
     if not data or "audio_url" not in data:
         return jsonify({"replies": [{"message": "❗ Нет ссылки на аудиофайл"}]}), 400
 
