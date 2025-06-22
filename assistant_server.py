@@ -44,3 +44,27 @@ def handle_whatsapp():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
+
+import requests
+import tempfile
+
+@app.route("/transcribe", methods=["POST"])
+def transcribe_voice():
+    data = request.get_json()
+    if not data or "audio_url" not in data:
+        return jsonify({"replies": [{"message": "❗ Нет ссылки на аудио"}]}), 400
+
+    audio_url = data["audio_url"]
+
+    # Скачиваем аудиофайл во временное хранилище
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".ogg") as tmp_file:
+        audio_data = requests.get(audio_url).content
+        tmp_file.write(audio_data)
+        tmp_file.flush()
+
+        # Отправляем в Whisper для транскрипции
+        with open(tmp_file.name, "rb") as f:
+            transcript = openai.Audio.transcribe("whisper-1", f)
+
+    text = transcript.get("text", "🤷 Не удалось распознать речь.")
+    return jsonify({"replies": [{"message": text}]})
