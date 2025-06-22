@@ -2,6 +2,8 @@ from flask import Flask, request, jsonify
 import openai
 import os
 import time
+import requests
+import tempfile
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 assistant_id = os.getenv("ASSISTANT_ID")
@@ -17,7 +19,6 @@ def handle_whatsapp():
 
     user_message = data["query"]["message"]
 
-    # Создаём поток и добавляем сообщение
     thread = openai.beta.threads.create()
     openai.beta.threads.messages.create(
         thread_id=thread.id,
@@ -30,7 +31,6 @@ def handle_whatsapp():
         assistant_id=assistant_id
     )
 
-    # Ждём ответа
     while True:
         run_status = openai.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
         if run_status.status == "completed":
@@ -42,11 +42,6 @@ def handle_whatsapp():
 
     return jsonify({"replies": [{"message": answer}]})
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
-
-import requests
-import tempfile
 
 @app.route("/transcribe", methods=["POST"])
 def transcribe_voice():
@@ -83,3 +78,8 @@ def transcribe_voice():
                 }
             ]
         })
+
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
